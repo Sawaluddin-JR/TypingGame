@@ -1,0 +1,146 @@
+﻿@page "/"
+
+@*untuk mengakses class Stats*@
+@using TypingGame.Models;
+
+@*pengaturan tampilan di browser/css*@
+<style>
+    .game-text{
+        font-size:72px;
+        font-weight:bold;
+        margin-right:4px;
+    }
+    .correct{
+        color:green;
+    }
+    .wrong{
+        color:red;
+    }
+</style>
+
+
+<div @ref="parentDiv" @onkeydown="OnType" tabindex="0">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                   @* perulangan untuk memberi warna pada setiap huruf benar atau salah nya 
+                       dan menghasil huruf yang telah di random untuk ditampilkan di browser*@
+                    @for (var ch = 0; ch < generatedChar.Length;ch++)
+                            {
+                        <span class="game-text @status[ch]">
+                            @generatedChar[ch]
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*menampilkan hasil dari benar,salah,total dan persentasi di browser*@
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <span>Correct   : @stats.Correct</span>
+                    <span>Missed    : @stats.Missed</span>
+                    <span>Total     : @stats.Total</span>
+                    <span>Accuracy  : @stats.Accuaracy %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    //string yang mau diacak
+    string alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM";
+
+    //buat nampilin di browser
+    char[] generatedChar = new char[7];
+
+    string[] status = new string[7];
+
+    //buat ngacak
+    Random random = new Random();
+
+    Stats stats;
+
+    public ElementReference parentDiv;
+
+    //methode buat nge fokus in tampilan agar sinkron
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            await parentDiv.FocusAsync();
+        }
+    }
+
+    // star game nya
+    private void SetUpGame()
+    {
+        stats = new Stats();
+
+        stats.Correct = 0;
+        stats.Missed = 0;
+        stats.Total = 0;
+        stats.Accuaracy = 0;
+
+        //methode untuk ngacak huruf nya
+        GenerateChar();
+    }
+
+    // main
+    protected override void OnInitialized()
+    {
+        SetUpGame();
+    }
+
+    //methode untuk menentukan hasil dari correct,missed,total
+    int cursor = 0;
+    public void OnType(KeyboardEventArgs e)
+    {
+        //kondisi ketika yang di ketik benar
+        if(e.Key == generatedChar[cursor].ToString().ToLower())
+        {
+            stats.Correct++;
+            status[cursor] = "correct";
+            cursor++;
+        }
+        //kondisi ketika yang diketik salah
+        else
+        {
+            stats.Missed++;
+            status[cursor] = "wrong";
+        }
+        //kondisi ketika sudah benar 7 kali di huruf random  
+        if (cursor >= 7)
+        {
+            status = new string[7];
+            cursor = 0;
+            GenerateChar();
+
+        }
+        //kondisi ketika sudah slah 5 kali di huruf random 
+        else if(stats.Missed >= 5)
+        {
+            status = new string[7];
+            cursor = 0;
+            SetUpGame();
+        }
+        //jumlah total berapa ketikan
+        stats.CountTotal();
+        stats.CountAccuaracy();
+        
+    }
+
+    public void GenerateChar()
+    {
+        for (int i = 0; i < 7; i++)
+        {
+            //mengambil string per huruf secara acak
+            generatedChar[i] = alphabet[random.Next(alphabet.Length)];
+        }
+    }
+}
